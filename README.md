@@ -1,8 +1,8 @@
 # LumenHealth 🩺✨
 
-**LumenHealth** is a lightweight, AI-assisted electronic medical record (EMR) system built for clinics, mobile health teams, and care providers operating in resource-constrained or low-connectivity environments. It prioritizes speed, clarity, and reliability over bloated hospital software, making it suitable for frontline healthcare delivery in underserved communities.
+**LumenHealth** is a lightweight, AI-assisted electronic medical record (EMR) system built for clinics, mobile health teams, and care providers operating in resource-constrained or low-connectivity environments. It prioritizes speed, clarity, and reliability over bloated hospital software.
 
-At its core, LumenHealth combines **AI-powered clinical intelligence** with **secure, blockchain-based payments** to support both care delivery and sustainability. Clinicians can capture patient encounters quickly, receive smart summaries and decision support, and accept fast digital payments, all within a system designed to work even when infrastructure is limited.
+At its core, LumenHealth combines **AI-powered clinical intelligence** with **secure, blockchain-based payments** to support both care delivery and sustainability.
 
 ---
 
@@ -16,136 +16,164 @@ At its core, LumenHealth combines **AI-powered clinical intelligence** with **se
 
 ---
 
-## Technology Overview
+## Architecture & Tech Stack
 
-* **Frontend:** React / React Native (clinic and mobile workflows)
-* **Backend:** Node.js + Express.js
-* **AI Layer:** Google Gemini (clinical summaries & assistance)
-* **Payments:** Stellar Network
-* **Database:** MongoDB
-* **Auth:** JWT-based authentication
+LumenHealth is a **Monorepo** managed by [Turborepo](https://turbo.build/) and NPM Workspaces. This allows us to share configuration, types, and logic between the frontend, backend, and blockchain services.
+
+| Layer | Technology | Description |
+| --- | --- | --- |
+| **Monorepo Tooling** | Turborepo / NPM | Orchestration and workspace management |
+| **Frontend** | Next.js (React) | Clinic dashboard and patient management UI |
+| **Backend** | Node.js + Express | REST API using a **Modular Monolith** architecture |
+| **Blockchain** | Stellar SDK | Payment processing and access control service |
+| **Database** | MongoDB | Off-chain storage for patient data and logs |
+| **AI Layer** | Google Gemini | Clinical summarization and intelligence |
 
 ---
 
 ## Repository Structure
 
-The project is organized around **clinical workflows**, not just technical layers.
+The project is divided into **Apps** (deployable services) and **Packages** (shared libraries).
 
-```
+```text
 lumen-health/
-├── src/
-│   ├── config/              # Env, database, AI & Stellar config
-│   ├── modules/
-│   │   ├── auth/            # Users, roles, sessions
-│   │   ├── patients/        # Patient records & demographics
-│   │   ├── encounters/      # Visits, notes, vitals
-│   │   ├── ai/              # Gemini prompts & summaries
-│   │   ├── payments/        # Stellar-based payments
-│   │   └── clinics/         # Clinic profiles & settings
-│   ├── middlewares/         # Security, validation, errors
-│   ├── routes/              # API routing
-│   └── app.ts               # App bootstrap
-├── tests/
-├── .env.example
-├── package.json
-└── README.md
+├── apps/
+│   ├── api/                 # Express Backend (The Core Logic)
+│   │   ├── src/modules/     # Domain-driven modules (Patients, Encounters, etc.)
+│   │   └── src/app.ts       # API Entry point
+│   ├── web/                 # Next.js Frontend Application
+│   └── stellar-service/     # Isolated service for Blockchain interactions
+├── packages/
+│   ├── config/              # Shared Environment variables & Configuration
+│   └── types/               # (Future) Shared TypeScript interfaces
+├── .env                     # Root "Source of Truth" for Environment Variables
+├── turbo.json               # Build pipeline configuration
+└── package.json             # Root workspace definition
+
 ```
 
-Each module owns its business logic, routes, and models to keep the system maintainable and contributor-friendly.
+### Backend Internal Structure (`apps/api`)
+
+The API follows a **Modular Monolith** pattern. Code is organized by domain, not just technical layer.
+
+* `modules/auth`: Users, roles, sessions (JWT)
+* `modules/patients`: Patient demographics & lookup
+* `modules/encounters`: The core append-only medical history
+* `modules/payments`: Subscription & Stellar payment logic
+* `modules/ai`: Gemini prompt management
 
 ---
 
 ## API Design (High-Level)
 
-### Base Path
-
-```
-/api/v1
-```
+**Base URL:** `http://localhost:4000/api/v1`
 
 ### Patients
 
-```
-POST   /patients
-GET    /patients/:id
-PATCH  /patients/:id
-```
+* `POST /patients` - Create new record
+* `GET /patients/:id` - Retrieve patient details
 
 ### Clinical Encounters
 
-```
-POST   /encounters
-GET    /encounters/:id
-GET    /encounters/patient/:patientId
-```
-
-### AI Assistance
-
-```
-POST   /ai/summarize
-POST   /ai/clinical-notes
-```
+* `POST /encounters` - Log a new visit
+* `GET /encounters/:id` - View visit details
+* `GET /encounters/patient/:patientId` - Full history
 
 ### Payments (Stellar)
 
-```
-POST   /payments/intent
-POST   /payments/confirm
-GET    /payments/:id
-```
+* `POST /payments/intent` - Generate payment request
+* `POST /payments/confirm` - Verify on-chain transaction
 
 ---
 
 ## Getting Started
 
-### Requirements
+### Prerequisites
 
-* Node.js (>= 18)
-* MongoDB
-* Google Gemini API key
-* Stellar testnet account
+* **Node.js** (v18 or higher)
+* **npm** (v10+ recommended)
+* **MongoDB** (Local or Atlas URL)
+* **Google Gemini API Key**
+* **Stellar Testnet Account**
 
-### Setup
+### Installation
 
+1. **Clone the Monorepo**
 ```bash
 git clone https://github.com/your-org/lumen-health.git
 cd lumen-health
-npm install
-cp .env.example .env
+
 ```
 
-### Run Locally
+
+2. **Install Dependencies (Root)**
+This installs dependencies for *all* apps and packages at once.
+```bash
+npm install
+
+```
+
+
+3. **Environment Setup**
+Create a **single** `.env` file in the **root** directory. The `packages/config` module will distribute these variables to all apps.
+```bash
+cp .env.example .env
+
+```
+
+
+**Example `.env`:**
+```env
+API_PORT=4000
+MONGO_URI=mongodb://localhost:27017/lumenhealth
+STELLAR_NETWORK=testnet
+GEMINI_API_KEY=your_key_here
+
+```
+
+
+
+### Running Locally
+
+To start **Frontend**, **Backend**, and **Services** simultaneously:
 
 ```bash
 npm run dev
+
 ```
 
-### Tests
+* **Frontend:** [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000)
+* **Backend:** [http://localhost:4000](https://www.google.com/search?q=http://localhost:4000)
+
+### Running Individual Workspaces
+
+If you only want to work on one part of the system:
 
 ```bash
-npm test
+npm run dev -w apps/api       # Run only Backend
+npm run dev -w apps/web       # Run only Frontend
+
 ```
 
 ---
 
 ## Contributing
 
-LumenHealth is an open-source project aimed at improving healthcare access and tooling. Contributions are welcome from engineers, designers, and healthcare technologists.
+LumenHealth is open-source. We welcome contributions from engineers, designers, and healthcare technologists.
 
-### Contribution Workflow
+### Workflow
 
-1. Fork the repository
-2. Create a feature or fix branch
-3. Keep PRs scoped to a single concern
-4. Add tests or documentation where relevant
-5. Open a Pull Request with context and screenshots if applicable
+1. **Fork** the repository.
+2. **Create a branch** for your feature (`git checkout -b feature/amazing-feature`).
+3. **Commit** your changes.
+4. **Push** to the branch.
+5. **Open a Pull Request**.
 
 ### Guidelines
 
-* Respect patient data principles, even in mock data
-* Avoid introducing heavy dependencies
-* Prefer clarity and reliability over clever abstractions
-* Discuss large changes before implementation
+* **Respect the Monorepo:** Ensure you are installing dependencies via the root `package.json` or using `npm install <pkg> -w apps/<app-name>`.
+* **Strict Types:** We use TypeScript. Please avoid `any` wherever possible.
+* **Patient Privacy:** Never include real patient data in tests or screenshots.
 
 ---
 
@@ -160,7 +188,3 @@ For questions, discussions, or contributor support, join the LumenHealth Telegra
 ## License
 
 LumenHealth is released under the **MIT License**.
-
-
-
-
